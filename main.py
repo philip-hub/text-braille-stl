@@ -26,26 +26,34 @@ def generate_braille_stl(text, filename):
     postcard_length = 6.0
     postcard_width = 4.0
     postcard_height = 0.1
+    margin = 0.1  # margin from the edge
 
     braille_group = []
-    x_offset = 0
-    y_offset = 0
+    x_offset = margin
+    y_offset = margin
 
     for braille_char in braille_text:
+        if x_offset + char_spacing >= postcard_length - margin:
+            x_offset = margin
+            y_offset += line_spacing
+
+        if y_offset + dot_spacing * 2 >= postcard_width - margin:
+            print("Warning: Text too long to fit on postcard")
+            break
+
         dots = [(x_offset + dot_spacing * (i % 2),
                  y_offset + dot_spacing * (i // 2),
                  unit_height if braille_char[i] == '1' else 0)
                 for i in range(6)]
+        
         for dot in dots:
             if dot[2] > 0:
                 translated_sphere = translate(dot)(sphere(r=unit_radius))
                 braille_group.append(translated_sphere)
                 # Debugging: Print coordinates and object info
                 print(f"Adding dot at {dot}: {translated_sphere}")
+        
         x_offset += char_spacing
-        if x_offset >= postcard_length - char_spacing:
-            x_offset = 0
-            y_offset += line_spacing
 
     postcard = cube([postcard_length, postcard_width, postcard_height])
     braille_model = union()(postcard, *braille_group)
